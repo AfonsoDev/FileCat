@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  filecat:
+    build: .
+    container_name: filecat_app
+    ports:
+      - "8000:80"
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./auth:/var/www/html/auth
+      - ./messages:/var/www/html/messages
+    restart: unless-stopped

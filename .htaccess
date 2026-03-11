@@ -1,0 +1,12 @@
+Options -Indexes
+
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Prevent direct access to .json and .sqlite files just in case
+<FilesMatch "\.(json|sqlite)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

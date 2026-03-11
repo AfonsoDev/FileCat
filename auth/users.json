@@ -1,0 +1,7 @@
+{
+    "admin": {
+        "password": "$2y$10$G1GS4.320jHNjg0rkSljkODJaZvUA1pXwxQV7L5IHxWFIvdkeSnRa",
+        "role": "admin",
+        "created_at": "2026-03-11T13:57:28-03:00"
+    }
+}

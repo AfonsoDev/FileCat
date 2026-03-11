@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+ * File Cat Custom Styles
+ * Animations and specific refinements that Tailwind classes can't cleanly provide
+ */
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-white/20 dark:border-gray-700/50 shadow-sm transition-all;
+  }
+}
+
+.file-item {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Make checkboxes look better */
+.item-checkbox {
+  @apply transition-transform scale-100 opacity-50;
+}
+.file-item:hover .item-checkbox,
+.item-selected .item-checkbox {
+  @apply opacity-100 scale-110;
+}
+
+.item-selected {
+  @apply ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800;
+}
+
+/* Hide scrollbar for clean UI but keep functionality */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
