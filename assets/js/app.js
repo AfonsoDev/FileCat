@@ -16,6 +16,7 @@ const app = {
         this.setViewMode(this.viewMode);
         this.updateHiddenUI();
         this.loadPath('/');
+        this.updates.check(); // Auto check on init
     },
 
     bindEvents() {
@@ -427,6 +428,126 @@ const app = {
             loader.classList.add('hidden');
             loader.classList.remove('flex');
             container.classList.remove('hidden');
+        }
+    },
+
+    switchView(view) {
+        this.currentView = view;
+        const navFiles = document.getElementById('nav-files');
+        const navUsers = document.getElementById('nav-users');
+        const viewFiles = document.getElementById('view-files');
+        const viewUsers = document.getElementById('view-users');
+        const btnNewUser = document.getElementById('btn-new-user');
+        const globalActions = document.querySelectorAll('.btn-global-action');
+
+        if (view === 'files') {
+            viewFiles.classList.remove('hidden');
+            viewUsers.classList.add('hidden');
+            navFiles.classList.add('bg-blue-50', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-400');
+            navFiles.classList.remove('text-gray-700', 'dark:text-gray-300');
+            if (navUsers) {
+                navUsers.classList.remove('bg-blue-50', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-400');
+                navUsers.classList.add('text-gray-700', 'dark:text-gray-300');
+            }
+            if (btnNewUser) btnNewUser.classList.add('hidden');
+            globalActions.forEach(el => el.classList.remove('hidden'));
+        } else {
+            viewFiles.classList.add('hidden');
+            viewUsers.classList.remove('hidden');
+            navFiles.classList.remove('bg-blue-50', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-400');
+            navFiles.classList.add('text-gray-700', 'dark:text-gray-300');
+            if (navUsers) {
+                navUsers.classList.add('bg-blue-50', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-400');
+                navUsers.classList.remove('text-gray-700', 'dark:text-gray-300');
+            }
+            if (btnNewUser) btnNewUser.classList.remove('hidden');
+            globalActions.forEach(el => el.classList.add('hidden'));
+            this.loadUsers();
+            this.updates.check(); // Check updates when entering management
+        }
+    },
+
+    toggleSelectAll() {
+        const checkboxes = document.querySelectorAll('.item-checkbox');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+            const itemEl = cb.closest('.file-item');
+            const path = itemEl.dataset.path;
+            
+            if (cb.checked) {
+                this.selectedItems.add(path);
+                itemEl.classList.add('item-selected');
+            } else {
+                this.selectedItems.delete(path);
+                itemEl.classList.remove('item-selected');
+            }
+        });
+        
+        this.updateSelectionToolbar();
+    },
+
+    downloadSelected() {
+        const paths = Array.from(this.selectedItems).join(',');
+        if (!paths) return;
+        
+        let url = `api/zip.php?paths=${encodeURIComponent(paths)}`;
+        if (this.secretPassword) url += `&password=${encodeURIComponent(this.secretPassword)}`;
+        
+        window.location.href = url;
+    },
+
+    updates: {
+        async check() {
+            try {
+                const res = await fetch('api/update.php?action=check');
+                if (!res.ok) return;
+                const data = await res.json();
+                
+                document.getElementById('local-commit').textContent = data.local_version || '--';
+                document.getElementById('remote-commit').textContent = data.remote_version || '--';
+                document.getElementById('last-update-check').textContent = data.last_check;
+                
+                const badge = document.getElementById('update-status-badge');
+                const btnUpdate = document.getElementById('btn-apply-update');
+                
+                if (data.update_available) {
+                    badge.textContent = 'Atualização Disponível';
+                    badge.className = 'px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+                    btnUpdate.disabled = false;
+                } else {
+                    badge.textContent = 'Atualizado';
+                    badge.className = 'px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+                    btnUpdate.disabled = true;
+                }
+            } catch (err) {}
+        },
+        async apply() {
+            if (!confirm('Tem certeza que deseja atualizar o sistema? Alterações locais não commitadas podem ser perdidas.')) return;
+            
+            const btn = document.getElementById('btn-apply-update');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Atualizando...';
+            
+            try {
+                const res = await fetch('api/update.php?action=apply');
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('Sistema atualizado com sucesso! Recarregando...');
+                    window.location.reload();
+                } else {
+                    alert('Erro na atualização: ' + (data.error || 'Erro desconhecido'));
+                    console.error(data.output);
+                }
+            } catch (err) {
+                alert('Erro de conexão ao atualizar');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
         }
     },
 

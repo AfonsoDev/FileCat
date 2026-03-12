@@ -171,10 +171,19 @@ $user = get_logged_in_username();
                 <button title="Excluir" onclick="app.modals.delete.open()" class="p-1.5 mx-1 text-red-600 hover:text-red-700 hover:bg-white dark:hover:bg-red-900/40 rounded-md transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
+                <button title="Baixar Selecionados (ZIP)" onclick="app.downloadSelected()" class="p-1.5 mx-1 text-blue-600 hover:text-blue-700 hover:bg-white dark:hover:bg-blue-900/40 rounded-md transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12"></path></svg>
+                </button>
             </div>
 
             <!-- Global Actions -->
             <div class="flex items-center space-x-3">
+                <div class="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex mr-3">
+                    <button onclick="app.toggleSelectAll()" class="px-2 py-1 text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors" title="Selecionar Tudo">
+                        Todos
+                    </button>
+                </div>
+
                 <!-- Toggle View Mode -->
                 <div class="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex">
                     <button onclick="app.setViewMode('grid')" class="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white" id="btn-view-grid">
@@ -246,6 +255,32 @@ $user = get_logged_in_username();
                             <!-- Injetado via JS -->
                         </tbody>
                     </table>
+                </div>
+
+                <div class="mt-8">
+                    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Informações do Sistema</h2>
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between">
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-lg font-medium text-gray-900 dark:text-white mr-3"><?= APP_NAME ?> Versão <?= APP_VERSION ?></span>
+                                    <span id="update-status-badge" class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Atualizado</span>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Versão Local: <span id="local-commit" class="font-mono text-xs">--</span> | Remota: <span id="remote-commit" class="font-mono text-xs">--</span></p>
+                                <p class="text-xs text-gray-400 mt-1">Última verificação: <span id="last-update-check">--</span></p>
+                            </div>
+                            <div class="mt-4 sm:mt-0 flex space-x-3">
+                                <button onclick="app.updates.check()" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition-colors flex items-center">
+                                    <svg id="update-check-icon" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    Check Git
+                                </button>
+                                <button id="btn-apply-update" onclick="app.updates.apply()" disabled class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg shadow-sm transition-colors flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                                    Atualizar Agora
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
