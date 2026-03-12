@@ -9,9 +9,11 @@ const app = {
     items: [], // Store current loaded items
     currentView: 'files', // files or users
     showHidden: localStorage.getItem('fc_showHidden') === 'true',
-    secretPassword: '', // Temporarily store password for the current session/access
+    theme: localStorage.getItem('fc_theme') || 'dark',
+    secretPassword: '', 
 
     init() {
+        this.initTheme();
         this.bindEvents();
         this.setViewMode(this.viewMode);
         this.updateHiddenUI();
@@ -115,16 +117,14 @@ const app = {
     },
 
     updateHiddenUI() {
-        const btn = document.getElementById('toggle-hidden');
-        const dot = btn.querySelector('.dot');
-        if (this.showHidden) {
-            btn.classList.add('bg-blue-600');
-            btn.classList.remove('bg-gray-200', 'dark:bg-gray-700');
-            dot.classList.add('translate-x-4');
-        } else {
-            btn.classList.remove('bg-blue-600');
-            btn.classList.add('bg-gray-200', 'dark:bg-gray-700');
-            dot.classList.remove('translate-x-4');
+        const toggle = document.getElementById('toggle-hidden');
+        if (toggle) {
+            const dot = toggle.querySelector('.dot');
+            const isActive = this.showHidden;
+            
+            toggle.classList.toggle('bg-blue-600', isActive);
+            toggle.classList.toggle('bg-gray-200', !isActive);
+            dot.style.transform = isActive ? 'translateX(20px)' : 'translateX(0)';
         }
     },
 
@@ -428,6 +428,30 @@ const app = {
             loader.classList.add('hidden');
             loader.classList.remove('flex');
             container.classList.remove('hidden');
+        }
+    },
+
+    initTheme() {
+        document.documentElement.classList.toggle('dark', this.theme === 'dark');
+        this.updateThemeUI();
+    },
+
+    toggleTheme() {
+        this.theme = (this.theme === 'dark') ? 'light' : 'dark';
+        localStorage.setItem('fc_theme', this.theme);
+        document.documentElement.classList.toggle('dark', this.theme === 'dark');
+        this.updateThemeUI();
+    },
+
+    updateThemeUI() {
+        const toggle = document.getElementById('toggle-theme');
+        if (toggle) {
+            const dot = toggle.querySelector('.dot');
+            const isDark = this.theme === 'dark';
+            
+            toggle.classList.toggle('bg-blue-600', isDark);
+            toggle.classList.toggle('bg-gray-200', !isDark);
+            dot.style.transform = isDark ? 'translateX(20px)' : 'translateX(0)';
         }
     },
 

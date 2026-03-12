@@ -13,7 +13,7 @@ require_login();
 $user = get_logged_in_username();
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -263,8 +263,21 @@ $user = get_logged_in_username();
                 <!-- Card: Display Preferences -->
                 <section>
                     <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Preferências de Exibição</h2>
-                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
-                        <div class="flex items-center justify-between">
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden shadow-sm">
+                        
+                        <!-- Toggle: Dark Mode -->
+                        <div class="p-6 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-base font-medium text-gray-900 dark:text-white">Tema Escuro</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Ativa o visual moderno e escuro (Dark Mode)</p>
+                            </div>
+                            <button onclick="app.toggleTheme()" id="toggle-theme" class="flex items-center w-12 h-7 p-1 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors focus:outline-none relative">
+                                <div class="dot w-5 h-5 bg-white rounded-full shadow-sm transition-transform transform"></div>
+                            </button>
+                        </div>
+
+                        <!-- Toggle: Hidden Files -->
+                        <div class="p-6 flex items-center justify-between">
                             <div>
                                 <h3 class="text-base font-medium text-gray-900 dark:text-white">Mostrar Arquivos Ocultos</h3>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Exibir arquivos e pastas que começam com um ponto (.)</p>
@@ -273,6 +286,7 @@ $user = get_logged_in_username();
                                 <div class="dot w-5 h-5 bg-white rounded-full shadow-sm transition-transform transform"></div>
                             </button>
                         </div>
+
                     </div>
                 </section>
 
