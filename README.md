@@ -29,12 +29,12 @@ Se você tem uma hospedagem convencional (cPanel) ou um servidor Linux com Apach
 
 1. Faça o download (arquivo `.zip`) deste repositório ou clone via `git`:
    ```bash
-   git clone https://github.com/seusuario/filecat.git
+   git clone https://github.com/AfonsoDev/FileCat.git
    ```
 2. Mova (ou faça upload via FTP) de todos os arquivos para o diretório público do seu servidor (ex: `/var/www/html` ou `public_html`).
 3. Acesse a url de instalação através do seu navegador:
    ```text
-   https://seusite.com/filecat/install.php
+   https://seusite.com/FileCat/install.php
    ```
 4. Preencha o formulário para criar o usuário administrador (isso gerará automaticamente as pastas e credenciais necessárias).
 5. Pronto! Acesse o login e comece a gerenciar seus arquivos.
@@ -49,8 +49,8 @@ Se preferir rodar a aplicação em containers Docker, o ambiente já vêm prepar
 
 1. Clone o repositório no seu servidor ou máquina local:
    ```bash
-   git clone https://github.com/seusuario/filecat.git
-   cd filecat
+   git clone https://github.com/AfonsoDev/FileCat.git
+   cd FileCat
    ```
 2. Suba o container rodando:
    ```bash
@@ -58,7 +58,7 @@ Se preferir rodar a aplicação em containers Docker, o ambiente já vêm prepar
    ```
 3. A aplicação estará ativa na porta `8000`. Acesse para instalar:
    ```text
-   http://localhost:8000/install.php
+   http://localhost:8080/install.php
    ```
 4. Os arquivos que você fizer upload, assim como as credenciais (`users.json`), persistirão nas pastas correspondentes de sua máquina (`./storage`, `./auth`, `./messages` - mapeamentos de volume que estão no `docker-compose.yml`).
 

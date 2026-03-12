@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  filecat:
+  FileCat:
     build: .
-    container_name: filecat_app
+    container_name: FileCat_app
     ports:
-      - "8000:80"
+      - "8080:80"
     volumes:
       - ./storage:/var/www/html/storage
       - ./auth:/var/www/html/auth
