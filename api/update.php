@@ -2,6 +2,7 @@
 ini_set('display_errors', 0);
 while(ob_get_level()) { ob_end_clean(); }
 
+require_once '../config.php';
 require_once 'api.php';
 
 // Apenas administradores podem atualizar o sistema
@@ -9,19 +10,37 @@ require_admin();
 
 $action = $_GET['action'] ?? 'check';
 
-// Helper to run git commands with error capturing
+// Helper to run git commands with error capturing and path discovery
 function run_git($cmd) {
     $output = [];
     $return_var = 0;
     
-    // We can try to use full path if needed, e.g. /usr/bin/git
-    $binary = 'git';
+    // 1. Try configured binary (from config.php)
+    $binary = defined('GIT_BINARY') ? GIT_BINARY : 'git';
     
     exec("$binary $cmd 2>&1", $output, $return_var);
+    
+    // 2. If not found (127), try common absolute paths on Linux
+    if ($return_var === 127 || (count($output) > 0 && strpos($output[0], 'not found') !== false)) {
+        $found = false;
+        $common_paths = ['/usr/bin/git', '/usr/local/bin/git', '/bin/git', '/usr/lib/git-core/git'];
+        
+        foreach ($common_paths as $path) {
+            if (is_executable($path)) {
+                $output = [];
+                exec("$path $cmd 2>&1", $output, $return_var);
+                $binary = $path; // Found it
+                $found = true;
+                break;
+            }
+        }
+    }
+    
     return [
         'success' => ($return_var === 0),
         'output' => implode("\n", $output),
-        'return_code' => $return_var
+        'return_code' => $return_var,
+        'binary_used' => $binary
     ];
 }
 

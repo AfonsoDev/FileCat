@@ -18,6 +18,9 @@ define('STORAGE_PATH', ROOT_PATH . DIRECTORY_SEPARATOR . 'storage');
 define('AUTH_PATH', ROOT_PATH . DIRECTORY_SEPARATOR . 'auth');
 define('MESSAGES_PATH', ROOT_PATH . DIRECTORY_SEPARATOR . 'messages');
 
+// Comando Git (pode ser o caminho completo se 'git' não estiver no PATH)
+define('GIT_BINARY', 'git');
+
 // Configurações de Upload
 define('MAX_UPLOAD_SIZE', 50 * 1024 * 1024); // 50MB
 define('ALLOWED_EXTENSIONS', [

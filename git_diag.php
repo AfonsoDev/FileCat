@@ -1,10 +1,8 @@
 <?php
 header('Content-Type: text/plain');
+require_once 'config.php';
 
-echo "Git Diagnostic:\n";
-
-$git_version = shell_exec('git --version 2>&1');
-echo "Git version output: " . trim($git_version) . "\n";
+echo "Git Diagnostic (Path Discovery Mode):\n";
 
 $whoami = shell_exec('whoami');
 echo "Current user: " . trim($whoami) . "\n";
@@ -12,17 +10,34 @@ echo "Current user: " . trim($whoami) . "\n";
 $cwd = getcwd();
 echo "Current Directory: " . $cwd . "\n";
 
-echo "\nGit Fetch Check:\n";
-exec('git fetch 2>&1', $fetch_output, $fetch_res);
-echo "Fetch Return Code: $fetch_res\n";
-echo "Fetch Output:\n" . implode("\n", $fetch_output) . "\n";
+// 1. Check configured binary
+$binary = defined('GIT_BINARY') ? GIT_BINARY : 'git';
+echo "\nChecking configured binary: $binary\n";
+$out1 = [];
+$res1 = 0;
+exec("$binary --version 2>&1", $out1, $res1);
+echo "Result: " . ($res1 === 0 ? "SUCCESS" : "FAILED") . "\n";
+echo "Output: " . (isset($out1[0]) ? $out1[0] : "no output") . "\n";
 
-echo "\nGit Rev-Parse Check:\n";
-$local = shell_exec('git rev-parse HEAD 2>&1');
-echo "Local HEAD: " . trim($local) . "\n";
+// 2. Probing common paths
+echo "\nProbing common absolute paths:\n";
+$common_paths = ['/usr/bin/git', '/usr/local/bin/git', '/bin/git', '/usr/lib/git-core/git', 'C:\Program Files\Git\bin\git.exe'];
 
-$remote = shell_exec('git rev-parse @{u} 2>&1');
-echo "Remote (tracking): " . trim($remote) . "\n";
+foreach ($common_paths as $path) {
+    echo "- Checking $path: ";
+    if (file_exists($path)) {
+        if (is_executable($path)) {
+            $out = []; $res = 0;
+            exec("$path --version 2>&1", $out, $res);
+            echo "FOUND & EXECUTABLE (" . (isset($out[0]) ? $out[0] : "no version output") . ")\n";
+        } else {
+            echo "FOUND BUT NOT EXECUTABLE\n";
+        }
+    } else {
+        echo "NOT FOUND\n";
+    }
+}
 
-$git_dir = shell_exec('git rev-parse --git-dir 2>&1');
-echo "Git Directory: " . trim($git_dir) . "\n";
+echo "\n--- End of Diagnostic ---\n";
+echo "If one of the absolute paths worked, copy it to config.php in 'GIT_BINARY'.\n";
+echo "Note: The system now tries to find these paths automatically in api/update.php.\n";
