@@ -24,32 +24,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Criar pasta do usuário admin
         $user_storage = STORAGE_PATH . DIRECTORY_SEPARATOR . $username;
+        $mkdir_storage = true;
         if (!is_dir($user_storage)) {
-            mkdir($user_storage, 0755, true);
+            $mkdir_storage = mkdir($user_storage, 0755, true);
         }
 
         // Criar pasta de mensagens do usuário admin
         $user_messages = MESSAGES_PATH . DIRECTORY_SEPARATOR . $username;
+        $mkdir_messages = true;
         if (!is_dir($user_messages)) {
-            mkdir($user_messages, 0755, true);
+            $mkdir_messages = mkdir($user_messages, 0755, true);
         }
 
-        // Criar users.json
-        $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-        $users_data = [
-            $username => [
-                'password' => $hashed_password,
-                'role' => 'admin',
-                'created_at' => date('c')
-            ]
-        ];
-        
-        file_put_contents(AUTH_PATH . '/users.json', json_encode($users_data, JSON_PRETTY_PRINT));
-        
-        // Criar lock file de instalação
-        file_put_contents(AUTH_PATH . '/.installed', date('c'));
-
-        $success = true;
+        if (!$mkdir_storage || !$mkdir_messages) {
+            $error = 'Erro ao criar pastas de armazenamento. Verifique as permissões do servidor.';
+        } else {
+            // Criar users.json
+            $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+            $users_data = [
+                $username => [
+                    'password' => $hashed_password,
+                    'role' => 'admin',
+                    'created_at' => date('c')
+                ]
+            ];
+            
+            $json_path = AUTH_PATH . '/users.json';
+            $lock_path = AUTH_PATH . '/.installed';
+            
+            if (file_put_contents($json_path, json_encode($users_data, JSON_PRETTY_PRINT)) === false) {
+                $error = 'Erro ao criar o arquivo de usuários (auth/users.json). Verifique as permissões.';
+            } elseif (file_put_contents($lock_path, date('c')) === false) {
+                $error = 'Erro ao concluir a instalação (auth/.installed). Verifique as permissões.';
+            } else {
+                $success = true;
+            }
+        }
     }
 }
 ?>
