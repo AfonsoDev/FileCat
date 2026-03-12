@@ -32,12 +32,20 @@ foreach ($dir_iterator as $fileinfo) {
         $item['type'] = 'folder';
         $folders[] = $item;
     } else {
-        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         $item['type'] = 'file';
         $item['size'] = $fileinfo->getSize();
         $item['size_human'] = humanFileSize($item['size'], 1);
         $item['extension'] = $ext;
         $item['icon'] = getIconForExtension($ext);
+        
+        // Suporte para Preview de Imagem
+        $image_exts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+        $item['is_image'] = in_array($ext, $image_exts);
+        if ($item['is_image']) {
+            $item['preview_url'] = 'api/preview.php?path=' . urlencode($item['path']) . '&raw=true';
+        }
+        
         $files[] = $item;
     }
 }

@@ -144,9 +144,18 @@ const app = {
 
     renderGridItem(item) {
         const isFolder = item.type === 'folder';
-        const iconSvg = isFolder ? 
-            `<svg class="w-12 h-12 text-blue-400 mb-2" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>` : 
-            `<svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
+        let iconHtml = '';
+        
+        if (isFolder) {
+            iconHtml = `<svg class="w-12 h-12 text-blue-400 mb-2" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>`;
+        } else if (item.is_image) {
+            iconHtml = `
+            <div class="w-20 h-20 mb-2 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                <img src="${item.preview_url}" alt="${item.name}" class="w-full h-full object-cover">
+            </div>`;
+        } else {
+            iconHtml = `<svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
+        }
             
         const action = isFolder ? `app.loadPath('${item.path}')` : `app.preview('${item.path}')`;
         const sizeInfo = isFolder ? '' : `<div class="text-xs text-gray-500 mt-1">${item.size_human}</div>`;
@@ -160,7 +169,7 @@ const app = {
                 <input type="checkbox" class="item-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
             </div>
             
-            ${iconSvg}
+            ${iconHtml}
             <div class="w-full truncate text-sm font-medium text-gray-700 dark:text-gray-200" title="${item.name}">${item.name}</div>
             ${sizeInfo}
         </div>`;
@@ -168,9 +177,18 @@ const app = {
 
     renderListItem(item) {
         const isFolder = item.type === 'folder';
-        const iconSvg = isFolder ? 
-            `<svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>` : 
-            `<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
+        let iconHtml = '';
+        
+        if (isFolder) {
+            iconHtml = `<svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>`;
+        } else if (item.is_image) {
+            iconHtml = `
+            <div class="w-8 h-8 rounded shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                <img src="${item.preview_url}" alt="${item.name}" class="w-full h-full object-cover">
+            </div>`;
+        } else {
+            iconHtml = `<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
+        }
             
         const action = isFolder ? `app.loadPath('${item.path}')` : `app.preview('${item.path}')`;
 
@@ -183,7 +201,7 @@ const app = {
                 <input type="checkbox" class="item-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
             </div>
             
-            <div class="mr-4">${iconSvg}</div>
+            <div class="mr-4">${iconHtml}</div>
             <div class="flex-1 truncate text-sm font-medium text-gray-700 dark:text-gray-200 block" title="${item.name}">${item.name}</div>
             
             <div class="hidden sm:block w-32 text-xs text-gray-500 dark:text-gray-400">${item.modified_human}</div>
@@ -320,7 +338,12 @@ const app = {
     },
 
     preview(path) {
-        // Para arquivos a gente faz apenas download no MVP pra simplificar se n ter modal de preview pronto
+        const item = this.items.find(i => i.path === path);
+        if (item && item.is_image) {
+            this.modals.previewImage.open(item);
+            return;
+        }
+        
         window.location.href = `api/download.php?path=${encodeURIComponent(path)}`;
     },
 
@@ -407,6 +430,28 @@ const app = {
                 } catch (err) {
                     alert(err.message);
                 }
+            }
+        },
+        previewImage: {
+            open(item) {
+                const modal = document.getElementById('modal-preview-image');
+                const img = document.getElementById('preview-image-content');
+                const name = document.getElementById('preview-image-name');
+                const info = document.getElementById('preview-image-info');
+                const downloadBtn = document.getElementById('preview-image-download');
+                
+                img.src = item.preview_url;
+                name.textContent = item.name;
+                info.textContent = `${item.size_human} • ${item.modified_human}`;
+                downloadBtn.href = `api/download.php?path=${encodeURIComponent(item.path)}`;
+                
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            },
+            close() {
+                const modal = document.getElementById('modal-preview-image');
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
             }
         }
     }

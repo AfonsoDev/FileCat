@@ -231,6 +231,30 @@ $user = get_logged_in_username();
         </div>
     </div>
 
+    <!-- Image Preview Modal -->
+    <div id="modal-preview-image" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 hidden transition-all duration-300 backdrop-blur-sm" onclick="app.modals.previewImage.close()">
+        <div class="relative w-full h-full flex items-center justify-center p-4 sm:p-12" onclick="event.stopPropagation()">
+            <!-- Close Button -->
+            <button onclick="app.modals.previewImage.close()" class="absolute top-6 right-6 p-2 text-white/50 hover:text-white transition-colors z-10 bg-white/10 rounded-full hover:bg-white/20">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <!-- Download Button -->
+            <a id="preview-image-download" href="#" download class="absolute top-6 right-20 p-2 text-white/50 hover:text-white transition-colors z-10 bg-white/10 rounded-full hover:bg-white/20" title="Download">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0L8 8m4-4v12"></path></svg>
+            </a>
+
+            <!-- Image -->
+            <div class="max-w-full max-h-full flex flex-col items-center">
+                <img id="preview-image-content" src="" alt="Preview" class="max-w-full max-h-[85vh] object-contain rounded shadow-2xl animate-fade-in transition-transform duration-300">
+                <div class="mt-6 text-center">
+                    <h4 id="preview-image-name" class="text-white text-lg font-medium truncate max-w-lg px-4"></h4>
+                    <p id="preview-image-info" class="text-white/60 text-sm mt-1"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Script Application Logic -->
     <script src="assets/js/app.js"></script>
 </body>
