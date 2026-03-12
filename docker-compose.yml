@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  FileCat:
+  filecat:
     build: .
-    container_name: FileCat_app
+    container_name: filecat_app
     ports:
       - "8080:80"
     volumes:
