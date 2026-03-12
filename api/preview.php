@@ -75,9 +75,17 @@ if (strpos($mime_type, 'text/') === 0 && !in_array($ext, ['html', 'svg'])) {
 // Neste caso simples do MVP, ou devolvemos a raw string se for txt, ou apenas uma ROTA de visualização
 // Como é MVP e usamos ajax pro modal:
 if (isset($_GET['raw']) && $_GET['raw'] === 'true') {
+    // Desabilita exibição de erros para não corromper o binário
+    ini_set('display_errors', 0);
+    
     header('Content-Type: ' . $mime_type);
-    ob_clean();
-    flush();
+    header('Content-Length: ' . filesize($file_path));
+    
+    // Limpa qualquer buffer de saída anterior
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
     readfile($file_path);
     exit;
 }

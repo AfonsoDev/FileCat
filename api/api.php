@@ -20,9 +20,6 @@ function json_response($data, $status_code = 200) {
 function get_safe_path($requested_path) {
     $base_dir = STORAGE_PATH . DIRECTORY_SEPARATOR . get_logged_in_username();
     
-    // Decodifica URL caso venha com espaços (%20)
-    $requested_path = urldecode($requested_path);
-    
     // Remove barras iniciais e duplas
     $requested_path = ltrim($requested_path, '/\\');
     

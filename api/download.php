@@ -29,6 +29,9 @@ $finfo = finfo_open(FILEINFO_MIME_TYPE);
 $mime_type = finfo_file($finfo, $file_path);
 finfo_close($finfo);
 
+// Desabilita exibição de erros para não corromper o binário
+ini_set('display_errors', 0);
+
 header('Content-Description: File Transfer');
 header('Content-Type: ' . $mime_type);
 header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -38,7 +41,9 @@ header('Pragma: public');
 header('Content-Length: ' . filesize($file_path));
 
 // Limpa qualquer output anterior e envia o arquivo
-ob_clean();
-flush();
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
 readfile($file_path);
 exit;
