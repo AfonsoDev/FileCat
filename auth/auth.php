@@ -7,7 +7,7 @@ function is_logged_in() {
 
 function require_login() {
     if (!is_logged_in()) {
-        header('Location: ' . dirname($_SERVER['PHP_SELF']) . '/auth/login.php');
+        header('Location: /auth/login.php');
         exit;
     }
 }
