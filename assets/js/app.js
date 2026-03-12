@@ -403,7 +403,7 @@ const app = {
             }
         },
         rename: {
-            async open() {
+            open() {
                 const items = Array.from(app.selectedItems);
                 if (items.length !== 1) return;
                 
@@ -411,8 +411,26 @@ const app = {
                 const parts = currentPath.split('/');
                 const currentName = parts[parts.length - 1];
                 
-                const newName = prompt('Novo nome:', currentName);
-                if (!newName || newName === currentName) return;
+                document.getElementById('input-rename').value = currentName;
+                document.getElementById('modal-rename').classList.remove('hidden');
+                setTimeout(() => document.getElementById('input-rename').focus(), 100);
+            },
+            close() {
+                document.getElementById('modal-rename').classList.add('hidden');
+                document.getElementById('input-rename').value = '';
+            },
+            async submit() {
+                const items = Array.from(app.selectedItems);
+                const currentPath = items[0];
+                const newName = document.getElementById('input-rename').value.trim();
+                
+                const parts = currentPath.split('/');
+                const currentName = parts[parts.length - 1];
+
+                if (!newName || newName === currentName) {
+                    this.close();
+                    return;
+                }
                 
                 try {
                     const res = await fetch('api/rename.php', {
@@ -426,6 +444,7 @@ const app = {
                         throw new Error(data.error || 'Erro ao renomear');
                     }
                     
+                    this.close();
                     app.loadPath(app.currentPath);
                 } catch (err) {
                     alert(err.message);
@@ -440,9 +459,11 @@ const app = {
                 const info = document.getElementById('preview-image-info');
                 const downloadBtn = document.getElementById('preview-image-download');
                 
+                if (!item) return;
+
                 img.src = item.preview_url;
                 name.textContent = item.name;
-                info.textContent = `${item.size_human} • ${item.modified_human}`;
+                info.textContent = `${item.size_human || ''} • ${item.modified_human || ''}`;
                 downloadBtn.href = `api/download.php?path=${encodeURIComponent(item.path)}`;
                 
                 modal.classList.remove('hidden');
