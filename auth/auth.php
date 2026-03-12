@@ -16,6 +16,18 @@ function get_logged_in_username() {
     return $_SESSION['username'] ?? null;
 }
 
+function is_admin() {
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+}
+
+function require_admin() {
+    require_login();
+    if (!is_admin()) {
+        http_response_code(403);
+        die('Acesso negado: Somente administradores.');
+    }
+}
+
 function authenticate($username, $password) {
     $users_file = AUTH_PATH . '/users.json';
     if (!file_exists($users_file)) {
@@ -33,4 +45,14 @@ function authenticate($username, $password) {
         }
     }
     return false;
+}
+
+function verify_current_user_password($password) {
+    $username = get_logged_in_username();
+    if (!$username) return false;
+
+    $users_file = AUTH_PATH . '/users.json';
+    $users = json_decode(file_get_contents($users_file), true);
+
+    return isset($users[$username]) && password_verify($password, $users[$username]['password']);
 }

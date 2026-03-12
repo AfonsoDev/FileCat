@@ -101,10 +101,26 @@ $user = get_logged_in_username();
         <nav class="flex-1 overflow-y-auto py-4">
             <ul class="space-y-1 px-3">
                 <li>
-                    <a href="#" onclick="app.loadPath('/'); return false;" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                    <a href="#" onclick="app.switchView('files'); return false;" id="nav-files" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                         Meu Disco
                     </a>
+                </li>
+                <?php if (is_admin()): ?>
+                <li>
+                    <a href="#" onclick="app.switchView('users'); return false;" id="nav-users" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        Gestão de Usuários
+                    </a>
+                </li>
+                <?php endif; ?>
+                <li class="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+                    <div class="flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <span>Mostrar Ocultos</span>
+                        <button onclick="app.toggleHidden()" id="toggle-hidden" class="flex items-center w-10 h-6 p-1 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors focus:outline-none">
+                            <div class="dot w-4 h-4 bg-white rounded-full transition-transform transform"></div>
+                        </button>
+                    </div>
                 </li>
             </ul>
         </nav>
@@ -174,35 +190,64 @@ $user = get_logged_in_username();
                     Nova Pasta
                 </button>
                 
-                <button onclick="document.getElementById('file-upload').click()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm flex items-center transition-colors relative overflow-hidden group">
+                <button onclick="document.getElementById('file-upload').click()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm flex items-center transition-colors relative overflow-hidden group btn-global-action">
                     <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     Upload
                     <input type="file" id="file-upload" class="hidden" multiple onchange="app.handleFiles(this.files)">
                 </button>
+
+                <button onclick="app.modals.newUser.open()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm flex items-center transition-colors hidden" id="btn-new-user">
+                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                    Novo Usuário
+                </button>
             </div>
         </header>
 
-        <!-- Loading View -->
-        <div id="loading" class="hidden flex-1 items-center justify-center">
-            <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-        </div>
-
-        <!-- Empty State View -->
-        <div id="empty-state" class="hidden flex-1 flex-col items-center justify-center text-center p-8">
-            <div class="w-32 h-32 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
-                <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        <!-- View: Files -->
+        <div id="view-files" class="flex-1 flex flex-col min-h-0">
+            <!-- Loading View -->
+            <div id="loading" class="hidden flex-1 items-center justify-center">
+                <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
             </div>
-            <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-2">Esta pasta está vazia</h3>
-            <p class="text-gray-500 dark:text-gray-400 max-w-sm mb-6">Arraste e solte arquivos aqui para fazer upload, ou crie uma nova pasta para começar a organizar.</p>
-            <button onclick="document.getElementById('file-upload').click()" class="text-blue-600 font-medium hover:underline">Fazer upload de um arquivo</button>
+
+            <!-- Empty State View -->
+            <div id="empty-state" class="hidden flex-1 flex-col items-center justify-center text-center p-8">
+                <div class="w-32 h-32 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-2">Esta pasta está vazia</h3>
+                <p class="text-gray-500 dark:text-gray-400 max-w-sm mb-6">Arraste e solte arquivos aqui para fazer upload, ou crie uma nova pasta para começar a organizar.</p>
+                <button onclick="document.getElementById('file-upload').click()" class="text-blue-600 font-medium hover:underline">Fazer upload de um arquivo</button>
+            </div>
+
+            <!-- Files Container (Grid/List content injected here via JS) -->
+            <div id="files-container" class="flex-1 overflow-y-auto p-4 sm:p-6 outline-none" tabindex="0">
+                <!-- Items injected by JS -->
+            </div>
         </div>
 
-        <!-- Files Container (Grid/List content injected here via JS) -->
-        <div id="files-container" class="flex-1 overflow-y-auto p-4 sm:p-6 outline-none" tabindex="0">
-            <!-- Items injected by JS -->
+        <!-- View: Users (Admin Only) -->
+        <div id="view-users" class="flex-1 flex flex-col min-h-0 hidden">
+            <div class="p-4 sm:p-6">
+                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-750 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th class="px-6 py-4">Usuário</th>
+                                <th class="px-6 py-4">Função</th>
+                                <th class="px-6 py-4">Criado em</th>
+                                <th class="px-6 py-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-list-body" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- Injetado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
         
     </main>
@@ -251,6 +296,34 @@ $user = get_logged_in_username();
         </div>
     </div>
 
+    <!-- New User Modal -->
+    <div id="modal-new-user" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden transition-opacity">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden transform scale-95 transition-transform p-6">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Adicionar Novo Usuário</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Nome de Usuário</label>
+                    <input type="text" id="input-new-user-name" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" placeholder="ex: joao_silva">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Senha</label>
+                    <input type="password" id="input-new-user-pass" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" placeholder="••••••••">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Função</label>
+                    <select id="input-new-user-role" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:text-white">
+                        <option value="user">Usuário Comum</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-8">
+                <button onclick="app.modals.newUser.close()" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancelar</button>
+                <button onclick="app.modals.newUser.submit()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Criar Usuário</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Image Preview Modal -->
     <div id="modal-preview-image" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 hidden transition-all duration-300 backdrop-blur-sm" onclick="app.modals.previewImage.close()">
         <div class="relative w-full h-full flex items-center justify-center p-4 sm:p-12" onclick="event.stopPropagation()">
@@ -275,7 +348,25 @@ $user = get_logged_in_username();
         </div>
     </div>
 
+    <!-- Secret Password Modal -->
+    <div id="modal-secret-password" class="fixed inset-0 z-[70] flex items-center justify-center bg-black bg-opacity-70 hidden transition-opacity">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform p-6">
+            <div class="flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full mx-auto mb-4">
+                <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </div>
+            <h3 class="text-xl font-semibold text-center text-gray-900 dark:text-white mb-2">Acesso Protegido</h3>
+            <p class="text-sm text-center text-gray-500 dark:text-gray-400 mb-6">Este item é secreto e exige sua senha de acesso para ser aberto.</p>
+            
+            <input type="password" id="input-secret-password" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 outline-none dark:text-white mb-6" placeholder="Sua senha de login">
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="app.modals.secretPassword.close()" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancelar</button>
+                <button onclick="app.modals.secretPassword.submit()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg">Desarquivar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Script Application Logic -->
-    <script src="assets/js/app.js"></script>
+    <script src="assets/js/app.js?v=<?= time() ?>"></script>
 </body>
 </html>

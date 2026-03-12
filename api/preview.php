@@ -15,6 +15,15 @@ if ($file_path === false || !is_file($file_path)) {
     die('Arquivo não encontrado ou acesso negado');
 }
 
+// Proteção para arquivos secretos
+$filename = basename($file_path);
+if (strpos($filename, '.secret_') === 0) {
+    if (!verify_current_user_password($_GET['password'] ?? '')) {
+        http_response_code(403);
+        die('Acesso negado: Este arquivo exige a senha correta.');
+    }
+}
+
 $filename = basename($file_path);
 $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 

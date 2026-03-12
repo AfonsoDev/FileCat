@@ -7,10 +7,14 @@ const app = {
     viewMode: localStorage.getItem('fc_viewMode') || 'grid', // grid or list
     selectedItems: new Set(),
     items: [], // Store current loaded items
+    currentView: 'files', // files or users
+    showHidden: localStorage.getItem('fc_showHidden') === 'true',
+    secretPassword: '', // Temporarily store password for the current session/access
 
     init() {
         this.bindEvents();
         this.setViewMode(this.viewMode);
+        this.updateHiddenUI();
         this.loadPath('/');
     },
 
@@ -72,13 +76,23 @@ const app = {
         });
     },
 
-    async loadPath(path) {
+    async loadPath(path, password = '') {
         this.currentPath = path;
         this.clearSelection();
         this.showLoading(true);
         
         try {
-            const res = await fetch(`api/list.php?path=${encodeURIComponent(path)}`);
+            const url = `api/list.php?path=${encodeURIComponent(path)}&show_hidden=${this.showHidden}&password=${encodeURIComponent(password || this.secretPassword)}`;
+            const res = await fetch(url);
+            
+            if (res.status === 403) {
+                const data = await res.json();
+                if (data.needs_password) {
+                    this.modals.secretPassword.open('folder', path);
+                    return;
+                }
+            }
+
             if (!res.ok) throw new Error('Falha ao carregar diretório');
             const data = await res.json();
             
@@ -89,6 +103,27 @@ const app = {
             alert(err.message);
         } finally {
             this.showLoading(false);
+        }
+    },
+
+    toggleHidden() {
+        this.showHidden = !this.showHidden;
+        localStorage.setItem('fc_showHidden', this.showHidden);
+        this.updateHiddenUI();
+        this.loadPath(this.currentPath);
+    },
+
+    updateHiddenUI() {
+        const btn = document.getElementById('toggle-hidden');
+        const dot = btn.querySelector('.dot');
+        if (this.showHidden) {
+            btn.classList.add('bg-blue-600');
+            btn.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+            dot.classList.add('translate-x-4');
+        } else {
+            btn.classList.remove('bg-blue-600');
+            btn.classList.add('bg-gray-200', 'dark:bg-gray-700');
+            dot.classList.remove('translate-x-4');
         }
     },
 
@@ -142,6 +177,106 @@ const app = {
         container.innerHTML = html;
     },
 
+    switchView(view) {
+        this.currentView = view;
+        
+        // Update Sidebar
+        const navFiles = document.getElementById('nav-files');
+        const navUsers = document.getElementById('nav-users');
+        
+        const activeClass = ['bg-blue-50', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-400'];
+        const inactiveClass = ['text-gray-700', 'hover:bg-gray-100', 'dark:text-gray-300', 'dark:hover:bg-gray-700'];
+
+        if (view === 'files') {
+            navFiles.classList.add(...activeClass);
+            navFiles.classList.remove(...inactiveClass);
+            if (navUsers) {
+                navUsers.classList.remove(...activeClass);
+                navUsers.classList.add(...inactiveClass);
+            }
+            document.getElementById('view-files').classList.remove('hidden');
+            document.getElementById('view-users').classList.add('hidden');
+            document.getElementById('breadcrumb').classList.remove('invisible');
+            document.querySelectorAll('.btn-global-action').forEach(b => b.classList.remove('hidden'));
+            if (document.getElementById('btn-new-user')) document.getElementById('btn-new-user').classList.add('hidden');
+            this.loadPath(this.currentPath);
+        } else {
+            navFiles.classList.remove(...activeClass);
+            navFiles.classList.add(...inactiveClass);
+            if (navUsers) {
+                navUsers.classList.add(...activeClass);
+                navUsers.classList.remove(...inactiveClass);
+            }
+            document.getElementById('view-files').classList.add('hidden');
+            document.getElementById('view-users').classList.remove('hidden');
+            document.getElementById('breadcrumb').classList.add('invisible');
+            document.querySelectorAll('.btn-global-action').forEach(b => b.classList.add('hidden'));
+            if (document.getElementById('btn-new-user')) document.getElementById('btn-new-user').classList.remove('hidden');
+            this.loadUsers();
+        }
+    },
+
+    async loadUsers() {
+        const listBody = document.getElementById('users-list-body');
+        if (!listBody) return;
+        listBody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-400">Carregando usuários...</td></tr>';
+
+        try {
+            const res = await fetch('api/users.php');
+            if (!res.ok) throw new Error('Erro ao carregar usuários');
+            const users = await res.json();
+
+            listBody.innerHTML = users.map(user => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-750/50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold mr-3">
+                                ${user.username[0].toUpperCase()}
+                            </div>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">${user.username}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}">
+                            ${user.role === 'admin' ? 'Administrador' : 'Usuário'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        ${user.created_at !== '--' ? new Date(user.created_at).toLocaleDateString() : '--'}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="app.deleteUser('${user.username}')" class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Excluir Usuário">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            listBody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">${err.message}</td></tr>`;
+        }
+    },
+
+    async deleteUser(username) {
+        if (!confirm(`Tem certeza que deseja excluir o usuário "${username}"?`)) return;
+
+        try {
+            const res = await fetch('api/users.php', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Erro ao excluir usuário');
+            }
+
+            this.loadUsers();
+        } catch (err) {
+            alert(err.message);
+        }
+    },
+
     renderGridItem(item) {
         const isFolder = item.type === 'folder';
         let iconHtml = '';
@@ -149,21 +284,27 @@ const app = {
         if (isFolder) {
             iconHtml = `<svg class="w-12 h-12 text-blue-400 mb-2" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>`;
         } else if (item.is_image) {
+            let src = item.preview_url;
+            if (item.is_secret) src += `&password=${encodeURIComponent(this.secretPassword)}`;
             iconHtml = `
-            <div class="w-20 h-20 mb-2 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
-                <img src="${item.preview_url}" alt="${item.name}" class="w-full h-full object-cover">
+            <div class="w-20 h-20 mb-2 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600 relative">
+                ${item.is_secret ? '<div class="absolute inset-0 bg-black/40 flex items-center justify-center z-10"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>' : ''}
+                <img src="${src}" alt="${item.name}" class="w-full h-full object-cover">
             </div>`;
         } else {
-            iconHtml = `<svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
+            iconHtml = `
+            <div class="relative">
+                ${item.is_secret ? '<div class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 z-10 scale-75"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>' : ''}
+                <svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            </div>`;
         }
             
-        const action = isFolder ? `app.loadPath('${item.path}')` : `app.preview('${item.path}')`;
         const sizeInfo = isFolder ? '' : `<div class="text-xs text-gray-500 mt-1">${item.size_human}</div>`;
 
         return `
         <div class="file-item relative group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-md transition-all select-none"
              data-path="${item.path}" data-type="${item.type}" data-name="${item.name}"
-             onclick="if(event.target.tagName !== 'INPUT') { ${action} }">
+             onclick="if(event.target.tagName !== 'INPUT') { app.handleItemClick(this.dataset.path, this.dataset.type) }">
             
             <div class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <input type="checkbox" class="item-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
@@ -182,20 +323,25 @@ const app = {
         if (isFolder) {
             iconHtml = `<svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>`;
         } else if (item.is_image) {
+            let src = item.preview_url;
+            if (item.is_secret) src += `&password=${encodeURIComponent(this.secretPassword)}`;
             iconHtml = `
-            <div class="w-8 h-8 rounded shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
-                <img src="${item.preview_url}" alt="${item.name}" class="w-full h-full object-cover">
+            <div class="w-8 h-8 rounded shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600 relative">
+                ${item.is_secret ? '<div class="absolute inset-0 bg-black/40 flex items-center justify-center z-10"><svg class="w-4 h-4 text-white scale-75" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>' : ''}
+                <img src="${src}" alt="${item.name}" class="w-full h-full object-cover">
             </div>`;
         } else {
-            iconHtml = `<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
+            iconHtml = `
+            <div class="relative">
+                ${item.is_secret ? '<div class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 z-10 scale-[0.6]"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>' : ''}
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            </div>`;
         }
             
-        const action = isFolder ? `app.loadPath('${item.path}')` : `app.preview('${item.path}')`;
-
         return `
         <div class="file-item flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
              data-path="${item.path}" data-type="${item.type}" data-name="${item.name}"
-             onclick="if(event.ctrlKey || event.metaKey || event.target.tagName === 'INPUT') { return; } ${action}">
+             onclick="if(event.ctrlKey || event.metaKey || event.target.tagName === 'INPUT') { return; } app.handleItemClick(this.dataset.path, this.dataset.type)">
             
             <div class="mr-4 pl-1" onclick="event.stopPropagation()">
                 <input type="checkbox" class="item-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
@@ -337,14 +483,31 @@ const app = {
         document.getElementById('file-upload').value = ''; // Reset input
     },
 
+    handleItemClick(path, type) {
+        if (type === 'folder') {
+            this.loadPath(path);
+        } else {
+            this.preview(path);
+        }
+    },
+
     preview(path) {
+        // Find item in the current collection
         const item = this.items.find(i => i.path === path);
+        if (item && item.is_secret && !this.secretPassword) {
+            this.modals.secretPassword.open('file', path);
+            return;
+        }
+
         if (item && item.is_image) {
             this.modals.previewImage.open(item);
             return;
         }
         
-        window.location.href = `api/download.php?path=${encodeURIComponent(path)}`;
+        // Fallback or non-image: download
+        let url = `api/download.php?path=${encodeURIComponent(path)}`;
+        if (this.secretPassword) url += `&password=${encodeURIComponent(this.secretPassword)}`;
+        window.location.href = url;
     },
 
     modals: {
@@ -461,10 +624,16 @@ const app = {
                 
                 if (!item) return;
 
-                img.src = item.preview_url;
+                let src = item.preview_url;
+                if (item.is_secret) src += `&password=${encodeURIComponent(app.secretPassword)}`;
+
+                img.src = src;
                 name.textContent = item.name;
                 info.textContent = `${item.size_human || ''} • ${item.modified_human || ''}`;
-                downloadBtn.href = `api/download.php?path=${encodeURIComponent(item.path)}`;
+                
+                let downloadUrl = `api/download.php?path=${encodeURIComponent(item.path)}`;
+                if (item.is_secret) downloadUrl += `&password=${encodeURIComponent(app.secretPassword)}`;
+                downloadBtn.href = downloadUrl;
                 
                 modal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
@@ -473,6 +642,70 @@ const app = {
                 const modal = document.getElementById('modal-preview-image');
                 modal.classList.add('hidden');
                 document.body.style.overflow = '';
+            }
+        },
+        newUser: {
+            open() {
+                document.getElementById('modal-new-user').classList.remove('hidden');
+                setTimeout(() => document.getElementById('input-new-user-name').focus(), 100);
+            },
+            close() {
+                document.getElementById('modal-new-user').classList.add('hidden');
+                document.getElementById('input-new-user-name').value = '';
+                document.getElementById('input-new-user-pass').value = '';
+                document.getElementById('input-new-user-role').value = 'user';
+            },
+            async submit() {
+                const username = document.getElementById('input-new-user-name').value.trim();
+                const password = document.getElementById('input-new-user-pass').value;
+                const role = document.getElementById('input-new-user-role').value;
+
+                if (!username || !password) return alert('Preencha todos os campos');
+
+                try {
+                    const res = await fetch('api/users.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password, role })
+                    });
+
+                    if (!res.ok) {
+                        const data = await res.json();
+                        throw new Error(data.error || 'Erro ao criar usuário');
+                    }
+
+                    this.close();
+                    app.loadUsers();
+                } catch (err) {
+                    alert(err.message);
+                }
+            }
+        },
+        secretPassword: {
+            targetType: '',
+            targetPath: '',
+            open(type, path) {
+                this.targetType = type;
+                this.targetPath = path;
+                document.getElementById('modal-secret-password').classList.remove('hidden');
+                setTimeout(() => document.getElementById('input-secret-password').focus(), 100);
+            },
+            close() {
+                document.getElementById('modal-secret-password').classList.add('hidden');
+                document.getElementById('input-secret-password').value = '';
+            },
+            async submit() {
+                const pass = document.getElementById('input-secret-password').value;
+                if (!pass) return;
+
+                app.secretPassword = pass;
+                this.close();
+
+                if (this.targetType === 'folder') {
+                    app.loadPath(this.targetPath);
+                } else {
+                    app.preview(this.targetPath);
+                }
             }
         }
     }
