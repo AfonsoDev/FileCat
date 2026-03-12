@@ -20,17 +20,24 @@ function run_git($cmd) {
     
     exec("$binary $cmd 2>&1", $output, $return_var);
     
-    // 2. If not found (127), try common absolute paths on Linux
+    // 2. If not found, try 'which git'
     if ($return_var === 127 || (count($output) > 0 && strpos($output[0], 'not found') !== false)) {
-        $found = false;
+        $which_out = shell_exec('which git');
+        if ($which_out) {
+            $binary = trim($which_out);
+            $output = [];
+            exec("$binary $cmd 2>&1", $output, $return_var);
+        }
+    }
+    
+    // 3. If still not found, try common absolute paths
+    if ($return_var === 127 || (count($output) > 0 && strpos($output[0], 'not found') !== false)) {
         $common_paths = ['/usr/bin/git', '/usr/local/bin/git', '/bin/git', '/usr/lib/git-core/git'];
-        
         foreach ($common_paths as $path) {
-            if (is_executable($path)) {
+            if (@is_executable($path)) {
                 $output = [];
                 exec("$path $cmd 2>&1", $output, $return_var);
-                $binary = $path; // Found it
-                $found = true;
+                $binary = $path;
                 break;
             }
         }
@@ -45,14 +52,10 @@ function run_git($cmd) {
 }
 
 if ($action === 'check') {
-    // 1. Fetch updates
     $fetch = run_git('fetch');
-    
-    // 2. Get local HEAD
     $local = run_git('rev-parse HEAD');
     $local_commit = $local['success'] ? trim($local['output']) : null;
     
-    // 3. Get remote (try tracking first, then common branches)
     $remote = run_git('rev-parse @{u}');
     if (!$remote['success']) {
         $remote = run_git('rev-parse origin/main');
@@ -62,7 +65,6 @@ if ($action === 'check') {
     }
     
     $remote_commit = $remote['success'] ? trim($remote['output']) : null;
-    
     $update_available = (is_string($local_commit) && is_string($remote_commit) && $local_commit !== $remote_commit);
     
     json_response([
@@ -73,25 +75,17 @@ if ($action === 'check') {
         'debug' => [
             'fetch' => $fetch,
             'local' => $local,
-            'remote' => $remote
+            'remote' => $remote,
+            'env_path' => getenv('PATH')
         ]
     ]);
 
 } elseif ($action === 'apply') {
     $pull = run_git('pull');
-    
     if ($pull['success']) {
-        json_response([
-            'success' => true,
-            'message' => 'Sistema atualizado com sucesso!',
-            'output' => $pull['output']
-        ]);
+        json_response(['success' => true, 'message' => 'Sistema atualizado com sucesso!', 'output' => $pull['output']]);
     } else {
-        json_response([
-            'success' => false,
-            'error' => 'Falha ao atualizar o sistema (git pull).',
-            'output' => $pull['output']
-        ], 500);
+        json_response(['success' => false, 'error' => 'Falha ao atualizar o sistema (git pull).', 'output' => $pull['output']], 500);
     }
 } else {
     json_response(['error' => 'Ação inválida'], 400);

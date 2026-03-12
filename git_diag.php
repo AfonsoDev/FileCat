@@ -2,22 +2,23 @@
 header('Content-Type: text/plain');
 require_once 'config.php';
 
-echo "Git Diagnostic (Path Discovery Mode):\n";
+echo "Git Diagnostic (Deep Search Mode):\n";
 
-$whoami = shell_exec('whoami');
-echo "Current user: " . trim($whoami) . "\n";
+echo "Environment PATH: " . getenv('PATH') . "\n";
+echo "Current user: " . trim(shell_exec('whoami')) . "\n";
+echo "Current Directory: " . getcwd() . "\n";
 
-$cwd = getcwd();
-echo "Current Directory: " . $cwd . "\n";
-
-// 1. Check configured binary
-$binary = defined('GIT_BINARY') ? GIT_BINARY : 'git';
-echo "\nChecking configured binary: $binary\n";
-$out1 = [];
-$res1 = 0;
-exec("$binary --version 2>&1", $out1, $res1);
-echo "Result: " . ($res1 === 0 ? "SUCCESS" : "FAILED") . "\n";
-echo "Output: " . (isset($out1[0]) ? $out1[0] : "no output") . "\n";
+// 1. Check 'which git'
+echo "\nChecking 'which git': ";
+$which = trim(shell_exec('which git'));
+if ($which) {
+    echo "FOUND at $which\n";
+    $out = []; $res = 0;
+    exec("$which --version 2>&1", $out, $res);
+    echo "Version: " . ($out[0] ?? "unknown") . "\n";
+} else {
+    echo "NOT FOUND\n";
+}
 
 // 2. Probing common paths
 echo "\nProbing common absolute paths:\n";
@@ -31,13 +32,20 @@ foreach ($common_paths as $path) {
             exec("$path --version 2>&1", $out, $res);
             echo "FOUND & EXECUTABLE (" . (isset($out[0]) ? $out[0] : "no version output") . ")\n";
         } else {
-            echo "FOUND BUT NOT EXECUTABLE\n";
+            echo "FOUND BUT NOT EXECUTABLE (Check permissions)\n";
         }
     } else {
         echo "NOT FOUND\n";
     }
 }
 
+echo "\n--- Repo Status ---\n";
+if (file_exists('.git')) {
+    echo "Checking .git folder: FOUND\n";
+    exec('git rev-parse --is-inside-work-tree 2>&1', $ot, $rs);
+    echo "Inside work tree? " . ($rs === 0 ? "YES" : "NO ($ot[0])") . "\n";
+} else {
+    echo ".git folder NOT FOUND in current directory (" . getcwd() . ")\n";
+}
+
 echo "\n--- End of Diagnostic ---\n";
-echo "If one of the absolute paths worked, copy it to config.php in 'GIT_BINARY'.\n";
-echo "Note: The system now tries to find these paths automatically in api/update.php.\n";
