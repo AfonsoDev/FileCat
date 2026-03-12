@@ -1,28 +1,29 @@
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
-# Habilita o mod_rewrite do Apache (necessário para os .htaccess do FileCat)
-RUN a2enmod rewrite
+# Instala Nginx e Supervisor (para rodar Nginx + PHP-FPM no mesmo container)
+RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instala extensões necessárias, se houver (o FileCat MVP não exige outras extensões além das padrão)
-# RUN docker-php-ext-install ...
+# Copia a config do Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Remove o site padrão do Nginx
+RUN rm -f /etc/nginx/sites-enabled/default
 
-# Define o ServerName para evitar avisos
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-
-# Habilita AllowOverride All para que os .htaccess funcionem corretamente
-# e libera acesso PHP a todos os subdiretórios (auth/, api/, etc.)
-RUN sed -i 's|<Directory /var/www/html/>|<Directory /var/www/html/>\n\tAllowOverride All|' /etc/apache2/sites-available/000-default.conf || true
-RUN printf '<Directory /var/www/html/>\n\tOptions -Indexes +FollowSymLinks\n\tAllowOverride All\n\tRequire all granted\n</Directory>\n' \
-    > /etc/apache2/conf-available/filecat.conf \
-    && a2enconf filecat
+# Copia a config do Supervisor (gerencia Nginx + PHP-FPM)
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Define o diretório de trabalho
 WORKDIR /var/www/html
 
-# Copia os arquivos do projeto para o diretório raiz do servidor
+# Copia os arquivos do projeto
 COPY . /var/www/html/
 
-# Ajusta as permissões para o usuário padrão do Apache (www-data)
+# Ajusta permissões para www-data (usuário do Nginx/PHP-FPM)
 RUN chown -R www-data:www-data /var/www/html/
 
 EXPOSE 80
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+
