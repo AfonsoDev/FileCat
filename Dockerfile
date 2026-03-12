@@ -9,6 +9,13 @@ RUN a2enmod rewrite
 # Define o ServerName para evitar avisos
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
+# Habilita AllowOverride All para que os .htaccess funcionem corretamente
+# e libera acesso PHP a todos os subdiretórios (auth/, api/, etc.)
+RUN sed -i 's|<Directory /var/www/html/>|<Directory /var/www/html/>\n\tAllowOverride All|' /etc/apache2/sites-available/000-default.conf || true
+RUN printf '<Directory /var/www/html/>\n\tOptions -Indexes +FollowSymLinks\n\tAllowOverride All\n\tRequire all granted\n</Directory>\n' \
+    > /etc/apache2/conf-available/filecat.conf \
+    && a2enconf filecat
+
 # Define o diretório de trabalho
 WORKDIR /var/www/html
 
@@ -16,6 +23,6 @@ WORKDIR /var/www/html
 COPY . /var/www/html/
 
 # Ajusta as permissões para o usuário padrão do Apache (www-data)
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/auth /var/www/html/messages
+RUN chown -R www-data:www-data /var/www/html/
 
 EXPOSE 80
