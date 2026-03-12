@@ -114,13 +114,11 @@ $user = get_logged_in_username();
                     </a>
                 </li>
                 <?php endif; ?>
-                <li class="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
-                    <div class="flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400">
-                        <span>Mostrar Ocultos</span>
-                        <button onclick="app.toggleHidden()" id="toggle-hidden" class="flex items-center w-10 h-6 p-1 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors focus:outline-none">
-                            <div class="dot w-4 h-4 bg-white rounded-full transition-transform transform"></div>
-                        </button>
-                    </div>
+                <li>
+                    <a href="#" onclick="app.switchView('settings'); return false;" id="nav-settings" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Configurações
+                    </a>
                 </li>
             </ul>
         </nav>
@@ -238,30 +236,36 @@ $user = get_logged_in_username();
             </div>
         </div>
 
-        <!-- View: Users (Admin Only) -->
-        <div id="view-users" class="flex-1 flex flex-col min-h-0 hidden">
-            <div class="p-4 sm:p-6">
-                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 dark:bg-gray-750 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                <th class="px-6 py-4">Usuário</th>
-                                <th class="px-6 py-4">Função</th>
-                                <th class="px-6 py-4">Criado em</th>
-                                <th class="px-6 py-4 text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-list-body" class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <!-- Injetado via JS -->
-                        </tbody>
-                    </table>
                 </div>
+            </div>
+        </div>
 
-                <div class="mt-8">
+        <!-- View: Settings -->
+        <div id="view-settings" class="flex-1 flex flex-col min-h-0 hidden">
+            <div class="p-4 sm:p-6 space-y-8">
+                <!-- Card: Display Preferences -->
+                <section>
+                    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Preferências de Exibição</h2>
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-base font-medium text-gray-900 dark:text-white">Mostrar Arquivos Ocultos</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Exibir arquivos e pastas que começam com um ponto (.)</p>
+                            </div>
+                            <button onclick="app.toggleHidden()" id="toggle-hidden" class="flex items-center w-12 h-7 p-1 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors focus:outline-none relative">
+                                <div class="dot w-5 h-5 bg-white rounded-full shadow-sm transition-transform transform"></div>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Card: System Info (Admin Only) -->
+                <?php if (is_admin()): ?>
+                <section id="settings-system-info">
                     <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Informações do Sistema</h2>
                     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between">
-                            <div>
+                            <div class="mb-4 sm:mb-0">
                                 <div class="flex items-center mb-2">
                                     <span class="text-lg font-medium text-gray-900 dark:text-white mr-3"><?= APP_NAME ?> Versão <?= APP_VERSION ?></span>
                                     <span id="update-status-badge" class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Atualizado</span>
@@ -269,7 +273,7 @@ $user = get_logged_in_username();
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Versão Local: <span id="local-commit" class="font-mono text-xs">--</span> | Remota: <span id="remote-commit" class="font-mono text-xs">--</span></p>
                                 <p class="text-xs text-gray-400 mt-1">Última verificação: <span id="last-update-check">--</span></p>
                             </div>
-                            <div class="mt-4 sm:mt-0 flex space-x-3">
+                            <div class="flex space-x-3">
                                 <button onclick="app.updates.check()" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition-colors flex items-center">
                                     <svg id="update-check-icon" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                     Check Git
@@ -281,7 +285,8 @@ $user = get_logged_in_username();
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
+                <?php endif; ?>
             </div>
         </div>
         

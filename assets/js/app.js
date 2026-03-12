@@ -435,35 +435,50 @@ const app = {
         this.currentView = view;
         const navFiles = document.getElementById('nav-files');
         const navUsers = document.getElementById('nav-users');
+        const navSettings = document.getElementById('nav-settings');
+        
         const viewFiles = document.getElementById('view-files');
         const viewUsers = document.getElementById('view-users');
+        const viewSettings = document.getElementById('view-settings');
+        
         const btnNewUser = document.getElementById('btn-new-user');
         const globalActions = document.querySelectorAll('.btn-global-action');
 
+        // Reset all views
+        [viewFiles, viewUsers, viewSettings].forEach(v => v ? v.classList.add('hidden') : null);
+        
+        // Reset all nav styles
+        const activeClasses = ['bg-blue-50', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-400'];
+        const inactiveClasses = ['text-gray-700', 'dark:text-gray-300'];
+        
+        [navFiles, navUsers, navSettings].forEach(nav => {
+            if (!nav) return;
+            nav.classList.remove(...activeClasses);
+            nav.classList.add(...inactiveClasses);
+        });
+
         if (view === 'files') {
             viewFiles.classList.remove('hidden');
-            viewUsers.classList.add('hidden');
-            navFiles.classList.add('bg-blue-50', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-400');
-            navFiles.classList.remove('text-gray-700', 'dark:text-gray-300');
-            if (navUsers) {
-                navUsers.classList.remove('bg-blue-50', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-400');
-                navUsers.classList.add('text-gray-700', 'dark:text-gray-300');
-            }
+            navFiles.classList.add(...activeClasses);
+            navFiles.classList.remove(...inactiveClasses);
             if (btnNewUser) btnNewUser.classList.add('hidden');
             globalActions.forEach(el => el.classList.remove('hidden'));
-        } else {
-            viewFiles.classList.add('hidden');
+        } else if (view === 'users') {
             viewUsers.classList.remove('hidden');
-            navFiles.classList.remove('bg-blue-50', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-400');
-            navFiles.classList.add('text-gray-700', 'dark:text-gray-300');
             if (navUsers) {
-                navUsers.classList.add('bg-blue-50', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-400');
-                navUsers.classList.remove('text-gray-700', 'dark:text-gray-300');
+                navUsers.classList.add(...activeClasses);
+                navUsers.classList.remove(...inactiveClasses);
             }
             if (btnNewUser) btnNewUser.classList.remove('hidden');
             globalActions.forEach(el => el.classList.add('hidden'));
             this.loadUsers();
-            this.updates.check(); // Check updates when entering management
+        } else if (view === 'settings') {
+            viewSettings.classList.remove('hidden');
+            navSettings.classList.add(...activeClasses);
+            navSettings.classList.remove(...inactiveClasses);
+            if (btnNewUser) btnNewUser.classList.add('hidden');
+            globalActions.forEach(el => el.classList.add('hidden'));
+            this.updates.check();
         }
     },
 
