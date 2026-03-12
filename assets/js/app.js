@@ -520,6 +520,11 @@ const app = {
                 if (!res.ok) return;
                 const data = await res.json();
                 
+                // Debug log for troubleshooting issues on the server
+                if (data.debug) {
+                    console.log('Update Check Debug:', data.debug);
+                }
+                
                 document.getElementById('local-commit').textContent = data.local_version || '--';
                 document.getElementById('remote-commit').textContent = data.remote_version || '--';
                 document.getElementById('last-update-check').textContent = data.last_check;
@@ -529,14 +534,16 @@ const app = {
                 
                 if (data.update_available) {
                     badge.textContent = 'Atualização Disponível';
-                    badge.className = 'px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+                    badge.className = 'px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/10 dark:text-orange-400';
                     btnUpdate.disabled = false;
                 } else {
                     badge.textContent = 'Atualizado';
-                    badge.className = 'px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+                    badge.className = 'px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900/10 dark:text-green-400';
                     btnUpdate.disabled = true;
                 }
-            } catch (err) {}
+            } catch (err) {
+                console.error('Erro ao verificar atualizações:', err);
+            }
         },
         async apply() {
             if (!confirm('Tem certeza que deseja atualizar o sistema? Alterações locais não commitadas podem ser perdidas.')) return;

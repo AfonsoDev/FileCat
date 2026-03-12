@@ -236,6 +236,23 @@ $user = get_logged_in_username();
             </div>
         </div>
 
+        <!-- View: Users (Admin Only) -->
+        <div id="view-users" class="flex-1 flex flex-col min-h-0 hidden">
+            <div class="p-4 sm:p-6">
+                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-750 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th class="px-6 py-4">Usuário</th>
+                                <th class="px-6 py-4">Função</th>
+                                <th class="px-6 py-4">Criado em</th>
+                                <th class="px-6 py-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-list-body" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- Injetado via JS -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

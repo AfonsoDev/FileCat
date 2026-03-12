@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 0);
+while(ob_get_level()) { ob_end_clean(); }
+
 require_once 'api.php';
 
 // Apenas administradores podem atualizar o sistema
@@ -6,41 +9,71 @@ require_admin();
 
 $action = $_GET['action'] ?? 'check';
 
+// Helper to run git commands with error capturing
+function run_git($cmd) {
+    $output = [];
+    $return_var = 0;
+    
+    // We can try to use full path if needed, e.g. /usr/bin/git
+    $binary = 'git';
+    
+    exec("$binary $cmd 2>&1", $output, $return_var);
+    return [
+        'success' => ($return_var === 0),
+        'output' => implode("\n", $output),
+        'return_code' => $return_var
+    ];
+}
+
 if ($action === 'check') {
-    // Verifica atualizações remotas
-    exec('git fetch', $output, $return_code);
+    // 1. Fetch updates
+    $fetch = run_git('fetch');
     
-    // Compara commit local com o remoto
-    $local = shell_exec('git rev-parse HEAD');
-    $remote = shell_exec('git rev-parse @{u}');
+    // 2. Get local HEAD
+    $local = run_git('rev-parse HEAD');
+    $local_commit = $local['success'] ? trim($local['output']) : null;
     
-    $update_available = (trim($local) !== trim($remote));
+    // 3. Get remote (try tracking first, then common branches)
+    $remote = run_git('rev-parse @{u}');
+    if (!$remote['success']) {
+        $remote = run_git('rev-parse origin/main');
+        if (!$remote['success']) {
+            $remote = run_git('rev-parse origin/master');
+        }
+    }
+    
+    $remote_commit = $remote['success'] ? trim($remote['output']) : null;
+    
+    $update_available = (is_string($local_commit) && is_string($remote_commit) && $local_commit !== $remote_commit);
     
     json_response([
         'update_available' => $update_available,
-        'local_version' => substr(trim($local), 0, 7),
-        'remote_version' => substr(trim($remote), 0, 7),
-        'last_check' => date('d/m/Y H:i:s')
+        'local_version' => $local_commit ? substr($local_commit, 0, 7) : '--',
+        'remote_version' => $remote_commit ? substr($remote_commit, 0, 7) : '--',
+        'last_check' => date('d/m/Y H:i:s'),
+        'debug' => [
+            'fetch' => $fetch,
+            'local' => $local,
+            'remote' => $remote
+        ]
     ]);
-} 
 
-if ($action === 'apply') {
-    // Executa o pull
-    exec('git pull 2>&1', $output, $return_code);
+} elseif ($action === 'apply') {
+    $pull = run_git('pull');
     
-    if ($return_code === 0) {
+    if ($pull['success']) {
         json_response([
             'success' => true,
             'message' => 'Sistema atualizado com sucesso!',
-            'output' => $output
+            'output' => $pull['output']
         ]);
     } else {
         json_response([
             'success' => false,
-            'error' => 'Falha ao atualizar o sistema via git pull.',
-            'output' => $output
+            'error' => 'Falha ao atualizar o sistema (git pull).',
+            'output' => $pull['output']
         ], 500);
     }
+} else {
+    json_response(['error' => 'Ação inválida'], 400);
 }
-
-json_response(['error' => 'Ação inválida'], 400);
