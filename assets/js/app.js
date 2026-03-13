@@ -11,6 +11,7 @@ const app = {
     showHidden: localStorage.getItem('fc_showHidden') === 'true',
     theme: localStorage.getItem('fc_theme') || 'dark',
     secretPassword: '', 
+    movePickerPath: '/',
 
     init() {
         this.initTheme();
@@ -75,6 +76,72 @@ const app = {
                     itemEl.classList.remove('item-selected');
                 }
                 this.updateSelectionToolbar();
+            }
+        });
+
+        // Item Drag & Drop (Internal Move)
+        document.getElementById('files-container').addEventListener('dragstart', (e) => {
+            const item = e.target.closest('.file-item');
+            if (item) {
+                const path = item.dataset.path;
+                // If dragging a non-selected item, select only it
+                if (!this.selectedItems.has(path)) {
+                    this.clearSelection();
+                    this.selectedItems.add(path);
+                    item.classList.add('item-selected');
+                    const cb = item.querySelector('.item-checkbox');
+                    if (cb) cb.checked = true;
+                    this.updateSelectionToolbar();
+                }
+                
+                e.dataTransfer.setData('text/plain', JSON.stringify(Array.from(this.selectedItems)));
+                e.dataTransfer.effectAllowed = 'move';
+                
+                // Ghost image/styling could be added here
+                item.classList.add('opacity-50');
+            }
+        });
+
+        document.getElementById('files-container').addEventListener('dragend', (e) => {
+            const item = e.target.closest('.file-item');
+            if (item) item.classList.remove('opacity-50');
+        });
+
+        document.getElementById('files-container').addEventListener('dragover', (e) => {
+            const folder = e.target.closest('.file-item[data-type="folder"]');
+            if (folder) {
+                e.preventDefault();
+                folder.classList.add('bg-blue-100', 'dark:bg-blue-900/40', 'border-blue-500');
+            }
+        });
+
+        document.getElementById('files-container').addEventListener('dragleave', (e) => {
+            const folder = e.target.closest('.file-item[data-type="folder"]');
+            if (folder) {
+                folder.classList.remove('bg-blue-100', 'dark:bg-blue-900/40', 'border-blue-500');
+            }
+        });
+
+        document.getElementById('files-container').addEventListener('drop', async (e) => {
+            const folder = e.target.closest('.file-item[data-type="folder"]');
+            if (folder) {
+                e.preventDefault();
+                folder.classList.remove('bg-blue-100', 'dark:bg-blue-900/40', 'border-blue-500');
+                
+                const destPath = folder.dataset.path;
+                const data = e.dataTransfer.getData('text/plain');
+                
+                try {
+                    const paths = JSON.parse(data);
+                    if (Array.isArray(paths)) {
+                        await this.executeMove(paths, destPath);
+                    }
+                } catch(err) {
+                    // Not internal move data, let handleFiles handle it if it's external files
+                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        // handled by global drop listener
+                    }
+                }
             }
         });
     },
@@ -304,7 +371,7 @@ const app = {
 
         return `
         <div class="file-item relative group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-md transition-all select-none"
-             data-path="${item.path}" data-type="${item.type}" data-name="${item.name}"
+             draggable="true" data-path="${item.path}" data-type="${item.type}" data-name="${item.name}"
              onclick="if(event.target.tagName !== 'INPUT') { app.handleItemClick(this.dataset.path, this.dataset.type) }">
             
             <div class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -341,7 +408,7 @@ const app = {
             
         return `
         <div class="file-item flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
-             data-path="${item.path}" data-type="${item.type}" data-name="${item.name}"
+             draggable="true" data-path="${item.path}" data-type="${item.type}" data-name="${item.name}"
              onclick="if(event.ctrlKey || event.metaKey || event.target.tagName === 'INPUT') { return; } app.handleItemClick(this.dataset.path, this.dataset.type)">
             
             <div class="mr-4 pl-1" onclick="event.stopPropagation()">
@@ -873,6 +940,96 @@ const app = {
                 } else {
                     app.preview(this.targetPath);
                 }
+            }
+        },
+        move: {
+            open() {
+                app.movePickerPath = app.currentPath;
+                document.getElementById('modal-move').classList.remove('hidden');
+                this.loadPickerPath(app.movePickerPath);
+            },
+            close() {
+                document.getElementById('modal-move').classList.add('hidden');
+            },
+            async loadPickerPath(path) {
+                app.movePickerPath = path;
+                const listEl = document.getElementById('move-picker-list');
+                const breadEl = document.getElementById('move-picker-breadcrumbs');
+                
+                listEl.innerHTML = '<div class="p-4 text-center text-gray-500">Carregando...</div>';
+                
+                // Render Picker Breadcrumbs
+                let breadHtml = `<button onclick="app.modals.move.loadPickerPath('/'); return false;" class="hover:text-blue-500">Raiz</button>`;
+                if (path !== '/') {
+                    const parts = path.split('/').filter(p => p);
+                    let curr = '';
+                    parts.forEach(p => {
+                        curr += '/' + p;
+                        breadHtml += ` <span class="mx-1">/</span> <button onclick="app.modals.move.loadPickerPath('${curr}'); return false;" class="hover:text-blue-500">${p}</button>`;
+                    });
+                }
+                breadEl.innerHTML = breadHtml;
+
+                try {
+                    const res = await fetch(`api/list.php?path=${encodeURIComponent(path)}&show_hidden=false`);
+                    const data = await res.json();
+                    
+                    const folders = data.items.filter(i => i.type === 'folder');
+                    
+                    if (folders.length === 0) {
+                        listEl.innerHTML = '<div class="p-8 text-center text-gray-400 text-sm">Nenhuma subpasta encontrada</div>';
+                    } else {
+                        listEl.innerHTML = folders.map(f => `
+                            <div onclick="app.modals.move.loadPickerPath('${f.path}')" class="flex items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer rounded-lg transition-colors group">
+                                <svg class="w-5 h-5 text-blue-400 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                                <span class="text-sm text-gray-700 dark:text-gray-200 flex-1">${f.name}</span>
+                                <svg class="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </div>
+                        `).join('');
+                    }
+                } catch (err) {
+                    listEl.innerHTML = '<div class="p-4 text-center text-red-500">Erro ao carregar</div>';
+                }
+            },
+            async submit() {
+                const sourcePaths = Array.from(app.selectedItems);
+                if (sourcePaths.length === 0) return;
+                
+                await app.executeMove(sourcePaths, app.movePickerPath);
+                this.close();
+            }
+        }
+    },
+
+    async executeMove(sourcePaths, destPath) {
+        const btn = document.getElementById('btn-move-submit');
+        const originalText = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = 'Movendo...';
+        }
+
+        try {
+            for (const source of sourcePaths) {
+                const res = await fetch('api/move.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ source, destination: destPath })
+                });
+
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || 'Erro ao mover item');
+                }
+            }
+            this.loadPath(this.currentPath);
+            this.clearSelection();
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         }
     }

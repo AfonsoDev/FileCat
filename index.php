@@ -169,6 +169,9 @@ $user = get_logged_in_username();
                 <button title="Excluir" onclick="app.modals.delete.open()" class="p-1.5 mx-1 text-red-600 hover:text-red-700 hover:bg-white dark:hover:bg-red-900/40 rounded-md transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
+                <button title="Mover para..." onclick="app.modals.move.open()" class="p-1.5 mx-1 text-blue-600 hover:text-blue-700 hover:bg-white dark:hover:bg-blue-900/40 rounded-md transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                </button>
                 <button title="Baixar Selecionados (ZIP)" onclick="app.downloadSelected()" class="p-1.5 mx-1 text-blue-600 hover:text-blue-700 hover:bg-white dark:hover:bg-blue-900/40 rounded-md transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12"></path></svg>
                 </button>
@@ -433,6 +436,32 @@ $user = get_logged_in_username();
             <div class="flex justify-end space-x-3">
                 <button onclick="app.modals.secretPassword.close()" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancelar</button>
                 <button onclick="app.modals.secretPassword.submit()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg">Desarquivar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Move to Folder Modal -->
+    <div id="modal-move" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden transition-opacity">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-transform flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Mover itens para...</h3>
+                <button onclick="app.modals.move.close()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Breadcrumbs for picker -->
+            <div class="px-4 py-3 bg-gray-100 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 flex items-center text-xs overflow-x-auto whitespace-nowrap" id="move-picker-breadcrumbs">
+                <!-- Injected via JS -->
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-2 min-h-[200px]" id="move-picker-list">
+                <!-- Injected via JS -->
+            </div>
+            
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-end space-x-3">
+                <button onclick="app.modals.move.close()" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">Cancelar</button>
+                <button id="btn-move-submit" onclick="app.modals.move.submit()" class="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors">Mover Aqui</button>
             </div>
         </div>
     </div>
