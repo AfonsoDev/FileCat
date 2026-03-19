@@ -10,4 +10,5 @@ services:
       - ./storage:/var/www/html/storage
       - ./auth:/var/www/html/auth
       - ./messages:/var/www/html/messages
+      - ./custom.ini:/usr/local/etc/php/conf.d/custom.ini
     restart: unless-stopped
