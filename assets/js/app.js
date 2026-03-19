@@ -698,7 +698,17 @@ const app = {
                 body: formData
             });
             
-            const data = await res.json();
+            let data;
+            try {
+                const text = await res.text();
+                data = JSON.parse(text);
+            } catch (e) {
+                if (res.status === 413) {
+                    throw new Error('O arquivo excede o limite de tamanho do servidor.');
+                }
+                throw new Error('Erro no servidor: O arquivo pode ser muito grande ou ocorreu um erro. (Resposta não é JSON)');
+            }
+            
             if (!res.ok) throw new Error(data.error || 'Erro no upload');
             
             document.getElementById('upload-title').textContent = 'Upload concluído';
