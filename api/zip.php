@@ -15,6 +15,22 @@ if (empty($paths)) {
     json_response(['error' => 'Nenhum caminho válido fornecido'], 400);
 }
 
+// action=check to prevent white screen downloads gracefully
+if (isset($_GET['action']) && $_GET['action'] === 'check') {
+    $added_count = 0;
+    foreach ($paths as $path) {
+        $full_path = get_safe_path($path);
+        if ($full_path === false || !file_exists($full_path)) continue;
+        $basename = basename($full_path);
+        if (strpos($basename, '.secret_') === 0 && !verify_current_user_password($password)) continue;
+        $added_count++;
+    }
+    if ($added_count === 0) {
+        json_response(['error' => 'Nenhum arquivo válido pôde ser adicionado ao ZIP ou acesso negado'], 404);
+    }
+    json_response(['success' => true]);
+}
+
 // Cria arquivo temporário para o ZIP
 $temp_zip = tempnam(sys_get_temp_dir(), 'fc_zip_');
 $zip = new ZipArchive();

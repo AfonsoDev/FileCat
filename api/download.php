@@ -2,8 +2,10 @@
 require_once 'api.php';
 
 $path = $_GET['path'] ?? '';
+$action = $_GET['action'] ?? '';
 
 if (empty($path)) {
+    if ($action === 'check') json_response(['error' => 'Caminho não especificado'], 400);
     http_response_code(400);
     die('Caminho não especificado');
 }
@@ -11,6 +13,7 @@ if (empty($path)) {
 $file_path = get_safe_path($path);
 
 if ($file_path === false || !is_file($file_path)) {
+    if ($action === 'check') json_response(['error' => 'Arquivo não encontrado ou acesso negado'], 404);
     http_response_code(404);
     die('Arquivo não encontrado ou acesso negado');
 }
@@ -19,9 +22,14 @@ if ($file_path === false || !is_file($file_path)) {
 $filename = basename($file_path);
 if (strpos($filename, '.secret_') === 0) {
     if (!verify_current_user_password($_GET['password'] ?? '')) {
+        if ($action === 'check') json_response(['error' => 'Acesso negado: Este arquivo exige a senha correta.'], 403);
         http_response_code(403);
         die('Acesso negado: Este arquivo exige a senha correta.');
     }
+}
+
+if ($action === 'check') {
+    json_response(['success' => true]);
 }
 
 $filename = basename($file_path);

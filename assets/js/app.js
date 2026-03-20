@@ -522,8 +522,31 @@ const app = {
         }
     },
 
+    toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        const isHidden = sidebar.classList.contains('-translate-x-full');
+        if (isHidden) {
+            sidebar.classList.remove('-translate-x-full');
+            if (overlay) overlay.classList.remove('hidden');
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            if (overlay) overlay.classList.add('hidden');
+        }
+    },
+
     switchView(view) {
         this.currentView = view;
+        
+        // Auto-close sidebar on mobile
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (sidebar && window.innerWidth < 768) {
+            sidebar.classList.add('-translate-x-full');
+            if (overlay) overlay.classList.add('hidden');
+        }
+
         const navFiles = document.getElementById('nav-files');
         const navUsers = document.getElementById('nav-users');
         const navSettings = document.getElementById('nav-settings');
@@ -594,14 +617,23 @@ const app = {
         this.updateSelectionToolbar();
     },
 
-    downloadSelected() {
+    async downloadSelected() {
         const paths = Array.from(this.selectedItems).join(',');
         if (!paths) return;
         
         let url = `api/zip.php?paths=${encodeURIComponent(paths)}`;
         if (this.secretPassword) url += `&password=${encodeURIComponent(this.secretPassword)}`;
         
-        window.location.href = url;
+        try {
+            const checkRes = await fetch(url + '&action=check');
+            if (!checkRes.ok) {
+                const data = await checkRes.json();
+                throw new Error(data.error || 'Erro ao preparar download');
+            }
+            window.location.href = url;
+        } catch (err) {
+            alert(err.message);
+        }
     },
 
     updates: {
@@ -751,7 +783,17 @@ const app = {
         // Fallback or non-image: download
         let url = `api/download.php?path=${encodeURIComponent(path)}`;
         if (this.secretPassword) url += `&password=${encodeURIComponent(this.secretPassword)}`;
-        window.location.href = url;
+        
+        // Verify before redirect
+        fetch(url + '&action=check').then(async (res) => {
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({error: 'Erro no download'}));
+                throw new Error(data.error || 'Acesso negado ou arquivo inexistente');
+            }
+            window.location.href = url;
+        }).catch(err => {
+            alert(err.message);
+        });
     },
 
     modals: {
@@ -878,6 +920,16 @@ const app = {
                 let downloadUrl = `api/download.php?path=${encodeURIComponent(item.path)}`;
                 if (item.is_secret) downloadUrl += `&password=${encodeURIComponent(app.secretPassword)}`;
                 downloadBtn.href = downloadUrl;
+                downloadBtn.onclick = (e) => {
+                    e.preventDefault();
+                    fetch(downloadUrl + '&action=check').then(async (res) => {
+                        if (!res.ok) {
+                            const data = await res.json().catch(() => ({error: 'Erro no download'}));
+                            throw new Error(data.error || 'Acesso negado');
+                        }
+                        window.location.href = downloadUrl;
+                    }).catch(err => alert(err.message));
+                };
                 
                 modal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
