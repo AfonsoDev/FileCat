@@ -205,13 +205,26 @@ const app = {
             
             parts.forEach((part, index) => {
                 currentPathBuild += (currentPathBuild ? '/' : '') + part;
+                
+                // On mobile, if path is long, hide middle parts
+                const isMobile = window.innerWidth < 640;
+                if (isMobile && parts.length > 3 && index > 0 && index < parts.length - 2) {
+                    if (index === 1) {
+                         html += `
+                            <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            <span class="text-gray-400">...</span>
+                        `;
+                    }
+                    return;
+                }
+
                 html += `
                     <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 `;
                 if (index === parts.length - 1) {
-                    html += `<span class="text-gray-900 dark:text-white font-medium truncate max-wxs">${part}</span>`;
+                    html += `<span class="text-gray-900 dark:text-white font-medium truncate max-w-[150px] sm:max-w-xs">${part}</span>`;
                 } else {
-                    html += `<a href="#" onclick="app.loadPath('${currentPathBuild}'); return false;" class="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 truncate max-w-xs">${part}</a>`;
+                    html += `<a href="#" onclick="app.loadPath('${currentPathBuild}'); return false;" class="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 truncate max-w-[100px] sm:max-w-xs">${part}</a>`;
                 }
             });
         }
@@ -618,19 +631,32 @@ const app = {
     },
 
     async downloadSelected() {
-        const paths = Array.from(this.selectedItems).join(',');
+        const paths = Array.from(this.selectedItems).join('|'); // Use | as delimiter
         if (!paths) return;
         
+        // Show status in toolbar or alert if it's too many
+        if (this.selectedItems.size > 10) {
+            console.log('Preparando ZIP para ' + this.selectedItems.size + ' itens...');
+        }
+
         let url = `api/zip.php?paths=${encodeURIComponent(paths)}`;
         if (this.secretPassword) url += `&password=${encodeURIComponent(this.secretPassword)}`;
         
         try {
+            // Check if server can handle this ZIP
             const checkRes = await fetch(url + '&action=check');
             if (!checkRes.ok) {
                 const data = await checkRes.json();
                 throw new Error(data.error || 'Erro ao preparar download');
             }
-            window.location.href = url;
+            
+            // To ensure browser triggers download even with pop-up blockers or redirects
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'filecat_download.zip';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         } catch (err) {
             alert(err.message);
         }

@@ -7,14 +7,27 @@
  * Animations and specific refinements that Tailwind classes can't cleanly provide
  */
 
+/* Custom Utilities for Responsiveness */
 @layer utilities {
   .glass {
     @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-white/20 dark:border-gray-700/50 shadow-sm transition-all;
   }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 640px) {
+  .btn-label { display: none; }
+  .selection-text { display: none; }
+  #selection-toolbar { @apply px-2 py-1; }
+  #selection-toolbar .px-4 { @apply px-2; }
+  #breadcrumbs { @apply text-xs flex-wrap; }
 }
 
 .file-item {
   animation: fadeIn 0.3s ease-out forwards;
+  @apply transition-transform active:scale-95;
 }
 
 @keyframes fadeIn {
@@ -24,22 +37,18 @@
 
 /* Make checkboxes look better */
 .item-checkbox {
-  @apply transition-transform scale-100 opacity-50;
+  @apply transition-all scale-100 opacity-50 sm:opacity-0;
 }
 .file-item:hover .item-checkbox,
 .item-selected .item-checkbox {
   @apply opacity-100 scale-110;
 }
 
-.item-selected {
-  @apply ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800;
+/* Show checkbox always on mobile for easier selection */
+@media (max-width: 768px) {
+  .item-checkbox { @apply opacity-100; }
 }
 
-/* Hide scrollbar for clean UI but keep functionality */
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.item-selected {
+  @apply ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800;
 }

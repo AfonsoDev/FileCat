@@ -168,21 +168,23 @@ $user = get_logged_in_username();
             </div>
 
             <!-- Context Actions (Hidden by default, shows when files are selected) -->
-            <div id="selection-toolbar" class="hidden flex items-center bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-4 py-1.5 rounded-lg mr-4 border border-blue-200 dark:border-blue-800">
-                <span class="text-sm font-medium mr-4"><span id="selection-count">1</span> selecionado(s)</span>
+            <div id="selection-toolbar" class="hidden flex items-center bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 sm:px-4 py-1.5 rounded-lg mr-2 sm:mr-4 border border-blue-200 dark:border-blue-800">
+                <span class="text-sm font-medium mr-2 sm:mr-4 whitespace-nowrap"><span id="selection-count">1</span> <span class="selection-text">selecionado(s)</span></span>
                 
-                <button title="Renomear" onclick="app.modals.rename.open()" class="action-btn-single p-1.5 mx-1 hover:bg-white dark:hover:bg-blue-800 rounded-md transition-colors" disabled>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                </button>
-                <button title="Excluir" onclick="app.modals.delete.open()" class="p-1.5 mx-1 text-red-600 hover:text-red-700 hover:bg-white dark:hover:bg-red-900/40 rounded-md transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
-                <button title="Mover para..." onclick="app.modals.move.open()" class="p-1.5 mx-1 text-blue-600 hover:text-blue-700 hover:bg-white dark:hover:bg-blue-900/40 rounded-md transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                </button>
-                <button title="Baixar Selecionados (ZIP)" onclick="app.downloadSelected()" class="p-1.5 mx-1 text-blue-600 hover:text-blue-700 hover:bg-white dark:hover:bg-blue-900/40 rounded-md transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12"></path></svg>
-                </button>
+                <div class="flex items-center border-l border-blue-200 dark:border-blue-800 ml-1 pl-1">
+                    <button title="Renomear" onclick="app.modals.rename.open()" class="action-btn-single p-1.5 mx-0.5 hover:bg-white dark:hover:bg-blue-800 rounded-md transition-colors" disabled>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>
+                    <button title="Excluir" onclick="app.modals.delete.open()" class="p-1.5 mx-0.5 text-red-600 hover:text-red-700 hover:bg-white dark:hover:bg-red-900/40 rounded-md transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                    <button title="Mover para..." onclick="app.modals.move.open()" class="p-1.5 mx-0.5 text-blue-600 hover:text-blue-700 hover:bg-white dark:hover:bg-blue-900/40 rounded-md transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    </button>
+                    <button title="Baixar Selecionados (ZIP)" onclick="app.downloadSelected()" class="p-1.5 mx-0.5 text-blue-600 hover:text-blue-700 hover:bg-white dark:hover:bg-blue-900/40 rounded-md transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Global Actions -->
@@ -203,14 +205,14 @@ $user = get_logged_in_username();
                     </button>
                 </div>
                 
-                <button onclick="app.modals.mkdir.open()" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg flex items-center transition-colors">
-                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
-                    Nova Pasta
+                <button onclick="app.modals.mkdir.open()" class="p-2 sm:px-3 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg flex items-center transition-colors shadow-sm" title="Nova Pasta">
+                    <svg class="w-5 h-5 sm:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+                    <span class="btn-label">Nova Pasta</span>
                 </button>
                 
-                <button onclick="document.getElementById('file-upload').click()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm flex items-center transition-colors relative overflow-hidden group btn-global-action">
-                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    Upload
+                <button onclick="document.getElementById('file-upload').click()" class="p-2 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm flex items-center transition-colors relative overflow-hidden group btn-global-action" title="Fazer Upload">
+                    <svg class="w-5 h-5 sm:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span class="btn-label">Upload</span>
                     <input type="file" id="file-upload" class="hidden" multiple onchange="app.handleFiles(this.files)">
                 </button>
 

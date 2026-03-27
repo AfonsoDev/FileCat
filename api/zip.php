@@ -8,7 +8,9 @@ if (!isset($_GET['paths'])) {
     json_response(['error' => 'Nenhum item selecionado'], 400);
 }
 
-$paths = explode(',', $_GET['paths']);
+// Suporta | como delimitador para evitar problemas com vírgulas em nomes de arquivos
+$delimiter = strpos($_GET['paths'], '|') !== false ? '|' : ',';
+$paths = explode($delimiter, $_GET['paths']);
 $password = $_GET['password'] ?? '';
 
 if (empty($paths)) {
